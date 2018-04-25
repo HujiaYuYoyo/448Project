@@ -87,30 +87,33 @@ def calculateMeanPricesAndVolumes(data):
     '''
     Mean Bid/Ask, Prices/Volumes
     sum(Price_i)/n
+    sum(Volumues_i)/n
     '''
-    data['meanBid'] = 'NA'
+    #data['meanBid'] = 'NA'
     bid_col_list = ['direct.bid{}'.format(i) for i in range(1,11)]
-    print(bid_col_list)
-    #for i in range(len(data)):
     data['meanBid'] = data[bid_col_list].sum(axis=1)
 
-    data['meanAsk'] = 'NA'
+    #data['meanAsk'] = 'NA'
     ask_col_list = ['direct.ask{}'.format(i) for i in range(1,11)]
-    #for i in range(len(data)):
     data['meanAsk'] = data[ask_col_list].sum(axis=1)
 
-    data['meanBidNum'] = 'NA'
+    #data['meanBidNum'] = 'NA'
     bidNum_col_list = ['direct.bnum{}'.format(i) for i in range(1,11)]
-    #for i in range(len(data)):
     data['meanBidNum'] = data[bidNum_col_list].sum(axis=1)
 
-    data['meanAskNum'] = 'NA'
+    #data['meanAskNum'] = 'NA'
     askNum_col_list = ['direct.anum{}'.format(i) for i in range(1,11)]
-    #for i in range(len(data)):
     data['meanAskNum'] = data[askNum_col_list].sum(axis=1)
 
-    var_cols = bid_col_list + ask_col_list + bidNum_col_list + askNum_col_list
-    var_cols += ['meanBid', 'meanAsk', 'meanBidNum', 'meanAskNum']
+    
+    bidVol_col_list = ['direct.bsize{}'.format(i) for i in range(1,11)]
+    data['meanBidVol'] = data[bidVol_col_list].sum(axis=1)
+    
+    askVol_col_list = ['direct.asize{}'.format(i) for i in range(1,11)]
+    data['meanAskVol'] = data[askVol_col_list].sum(axis=1)
+    
+    var_cols = bid_col_list + ask_col_list + bidNum_col_list + askNum_col_list + 
+    var_cols += ['meanBid', 'meanAsk', 'meanBidNum', 'meanAskNum', 'meanBidVol','meanAskVol']
     return data, var_cols
 
 def calculateSpreadsAndMidPrices(data):
@@ -122,17 +125,11 @@ def calculateSpreadsAndMidPrices(data):
     '''
     # calculate spreads
     for i in range(1,11):
-        #data['spread_{}'.format(i)] = 'NA'
-        #bid = data.loc[i, 'direct.bid{}'.format(i)]
-        #ask = data.loc[j, 'direct.ask{}'.format(i)]
         spread = [data.loc[j, 'direct.ask{}'.format(i)] - data.loc[j, 'direct.bid{}'.format(i)] for j in range(len(data))]
         data['spread_{}'.format(i)] = spread
 
     # calculate mid prices
     for i in range(1,11):
-        #data['midPrice_{}'.format(i)] = 'NA'
-        #bid = data.loc[j, 'direct.bid{}'.format(i)]
-        #ask = data.loc[j, 'direct.ask{}'.format(i)]
         midPrice = [(data.loc[j, 'direct.ask{}'.format(i)] + data.loc[j, 'direct.bid{}'.format(i)])/2 for j in range(len(data))]
         data['midPrice_{}'.format(i)] = midPrice
 
@@ -141,6 +138,19 @@ def calculateSpreadsAndMidPrices(data):
     var_cols = var_cols_spread + var_cols_mp
     return data, var_cols
 
+def calculateAccumulatedDifferences(data):
+    '''
+    sum(P_ask_i - P_bid_i)
+    sum(V_ask_i - V_bid_i)
+    '''
+    askPrice_cols = ['direct.ask{}'.format(i) for i in range(1,11)]
+    bidPrice_cols = ['direct.bid{}'.format(i) for i in range(1,11)]
+    data['accumulatedPriceDiff'] = data[askPrice_cols].sum(axis=1) - data[bidPrice_cols].sum(axis=1)
+    
+    askVolume_cols = ['direct.size{}'.format(i) for i in range(1,11)]
+    bidVolume_cols = ['direct.size{}'.format(i) for i in range(1,11)]
+    data['accumulatedVolumeDiff'] = data[askVolume_cols].sum(axis=1) - data[bidVolume_cols].sum(axis=1)
+    
 def createFeatures(data_path, out_path, response_type):
     '''
     Generates features from Order Book Data
@@ -160,5 +170,5 @@ def createFeatures(data_path, out_path, response_type):
     data = createResponseVariable(data, response_type)
 
     feature_vars = meanPriceVol_vars + spreadMidPrice_vars + ['Response']
-    data = data[feature_vars]
+    #data = data[feature_vars]
     data.to_csv(out_path, index = False)
