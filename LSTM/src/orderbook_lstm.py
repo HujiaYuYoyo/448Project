@@ -1,6 +1,7 @@
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
+from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.recurrent import LSTM
+import tensorflow as tf
 
 class OrderBookLSTM:
     '''
@@ -22,18 +23,19 @@ class OrderBookLSTM:
         self.model = self.createLSTM()
 
     def createLSTM(self):
+        tf.reset_default_graph()
         print('Building model...')
         model = Sequential()
         model.add(LSTM(self.layer_neurons, input_shape=self.input_shape, return_sequences=True))
         for i in range(self.num_hidden_layers):
             if i == self.num_hidden_layers-1:
-                model.add(LSTM(self.layer_neurons, return_sequences=False))
+                model.add(LSTM(self.layer_neurons, return_sequences=True)) # False?
             else:
                 model.add(LSTM(self.layer_neurons, return_sequences=True))
 
         if self.dropout is not None:
             model.add(Dropout(self.dropout))
-
+        model.add(Flatten())
         model.add(Dense(self.output_shape, activation='softmax'))
 
         print('Compiling model...')
