@@ -92,12 +92,12 @@ def calculatePriceDiffs(data):
     1. P_ask_n - P_ask_1 (ask diff)
     2. P_bid_n - P_bid_1 (bid diff)
     3. abs(P_ask_i+1 - P_ask_i) {i = 1 : n}
-    4. 
+    4.
     '''
     # 1. Ask Diff
-    
-    
-    
+
+
+
 def calculateMeanPricesAndVolumes(data):
     '''
     (V4)
@@ -121,13 +121,13 @@ def calculateMeanPricesAndVolumes(data):
     askNum_col_list = ['direct.anum{}'.format(i) for i in range(1,11)]
     data['meanAskNum'] = data[askNum_col_list].sum(axis=1)/10
 
-    
+
     bidVol_col_list = ['direct.bsize{}'.format(i) for i in range(1,11)]
     data['meanBidVol'] = data[bidVol_col_list].sum(axis=1)/10
-    
+
     askVol_col_list = ['direct.asize{}'.format(i) for i in range(1,11)]
     data['meanAskVol'] = data[askVol_col_list].sum(axis=1)/10
-    
+
     #var_cols = bid_col_list + ask_col_list + bidNum_col_list + askNum_col_list +bidVol_col_list+askVol_col_list
     var_cols = ['meanBid', 'meanAsk', 'meanBidNum', 'meanAskNum', 'meanBidVol','meanAskVol']
     return data, var_cols
@@ -164,11 +164,11 @@ def calculateAccumulatedDifferences(data):
     askPrice_cols = ['direct.ask{}'.format(i) for i in range(1,11)]
     bidPrice_cols = ['direct.bid{}'.format(i) for i in range(1,11)]
     data['accumulatedPriceDiff'] = data[askPrice_cols].sum(axis=1) - data[bidPrice_cols].sum(axis=1)
-    
+
     askVolume_cols = ['direct.asize{}'.format(i) for i in range(1,11)]
     bidVolume_cols = ['direct.bsize{}'.format(i) for i in range(1,11)]
     data['accumulatedVolumeDiff'] = data[askVolume_cols].sum(axis=1) - data[bidVolume_cols].sum(axis=1)
-    
+
     var_cols = ['accumulatedPriceDiff', 'accumulatedVolumeDiff']
     return data, var_cols
 
@@ -187,13 +187,14 @@ def createFeatures(data_path, out_path, response_type):
     askVolume_vars = ['direct.asize{}'.format(i) for i in range(1,11)]
     bidVolume_vars = ['direct.bsize{}'.format(i) for i in range(1,11)]
     orig_vars = askPrice_vars + bidPrice_vars +  askVolume_vars + bidVolume_vars
-    
+
     data = pd.read_csv(data_path)
     data, meanPriceVol_vars = calculateMeanPricesAndVolumes(data) # V4
     data, spreadMidPrice_vars = calculateSpreadsAndMidPrices(data) # V2
     data, accumlatedDiff_vars = calculateAccumulatedDifferences(data) # V5
     data = createResponseVariable(data, response_type)
 
-    feature_vars = orig_vars + meanPriceVol_vars + spreadMidPrice_vars + accumlatedDiff_vars + ['Response']
+    # vwap = V6
+    feature_vars = ['direct.vwap'] + orig_vars + meanPriceVol_vars + spreadMidPrice_vars + accumlatedDiff_vars + ['Response']
     data = data[feature_vars]
     data.to_csv(out_path, index = False)
