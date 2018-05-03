@@ -14,7 +14,7 @@ short_open = 1.25;
 short_close = 0.75
 
 risk_free = 0 #exogeneous parameters
-tran_cost = 0.0005
+tran_cost = 2
 
 
 leverage = 1 #risk parameters
@@ -77,16 +77,13 @@ def metrics(wealth):
     n = len(wealth)
     times = range(n)
     plt.plot(times, wealth, c='blue')
-    plt.title('Evolution of the wealth')
+    plt.title('Evolution of wealth')
     plt.xlabel('Seconds')
     plt.ylabel('Dollars')
     plt.show()
 
     log_wealth = np.log(wealth)
     list_logreturns = np.diff(log_wealth, axis=0)
-
-    print(np.max(log_wealth))
-    print(np.max(list_logreturns))
 
     plt.plot(range(n - 1), list_logreturns, c='blue')
     plt.title('Evolution of the log-returns')
@@ -184,10 +181,10 @@ def execute(tickers):
                         increment = leverage * (sellprice[training_size + t, 0] - np.ceil(b) * buyprice[training_size + t, 1])
                 elif position[t, 0] > 0 and s > -short_close:
                     position[t + 1, :] = np.zeros(2)
-                    increment = leverage * (sellprice[training_size + t, 0] + np.ceil(b) * buyprice[training_size + t, 1])
+                    increment = leverage * (-buyprice[training_size + t, 0] + np.ceil(b) * sellprice[training_size + t, 1])
                 elif position[t, 0] < 0 and s < long_close:
                     position[t + 1, :] = np.zeros(2)
-                    increment = leverage * (-buyprice[training_size + t, 0] + np.ceil(b) * sellprice[training_size + t, 1])
+                    increment = leverage * (sellprice[training_size + t, 0] - np.ceil(b) * buyprice[training_size + t, 1])
                 else:
                     position[t + 1, :] = position[t, :]  
 
