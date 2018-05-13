@@ -50,7 +50,7 @@ def mergeOrderBookDays(data_dir, out_path, prefixes):
         data.to_csv(out_path, index = False)
     #return data
 
-def createResponseVariable(data, response_type = 'Classification'):
+def createResponseVariable(data, response_type = 'Classification', look_forward = 0):
     '''
     Generates response variable for raw input data.
     Response variable will be:
@@ -58,13 +58,15 @@ def createResponseVariable(data, response_type = 'Classification'):
         - Up , Down, No Change (response_type = 'Classification')
     '''
     if response_type.upper() == 'REGRESSION':
-        response_col = [data.loc[i+1, 'direct.mid'] for i in range(len(data)-1)]
+        response_col = [data.loc[i+1, 'direct.vwap'] for i in range(len(data)-1)]
 
     elif response_type.upper() == 'CLASSIFICATION':
+        #response_col = [data.loc[i+1, 'direct.vwap'] for i in range(len(data)-(1))]
+        
         response_col = []
         for i in range(len(data)-1):
-            current_price = data.loc[i, 'direct.mid']
-            next_price = data.loc[i+1, 'direct.mid']
+            current_price = data.loc[i, 'direct.vwap']
+            next_price = data.loc[i+1, 'direct.vwap']
             diff = next_price - current_price
             if diff == 0:
                 response_col.append(0)
@@ -72,7 +74,7 @@ def createResponseVariable(data, response_type = 'Classification'):
                 response_col.append(1)
             elif diff < 0:
                 response_col.append(2)
-
+        
     data = data[:-1] # get rid of last row, which won't have a response variable
     data['Response'] = response_col
     return data
@@ -172,7 +174,7 @@ def calculateAccumulatedDifferences(data):
     var_cols = ['accumulatedPriceDiff', 'accumulatedVolumeDiff']
     return data, var_cols
 
-def createFeatures(data_path, out_path, response_type):
+def createFeatures(data_path, out_path, response_type, look_forward):
     '''
     Generates features from Order Book Data
 
@@ -192,9 +194,10 @@ def createFeatures(data_path, out_path, response_type):
     data, meanPriceVol_vars = calculateMeanPricesAndVolumes(data) # V4
     data, spreadMidPrice_vars = calculateSpreadsAndMidPrices(data) # V2
     data, accumlatedDiff_vars = calculateAccumulatedDifferences(data) # V5
-    data = createResponseVariable(data, response_type)
+    data = createResponseVariable(data, response_type, look_forward)
 
     # vwap = V6
-    feature_vars = ['direct.vwap'] + orig_vars + meanPriceVol_vars + spreadMidPrice_vars + accumlatedDiff_vars + ['Response']
+    feature_vars =  ['direct.vwap'] + orig_vars + meanPriceVol_vars + spreadMidPrice_vars + accumlatedDiff_vars + ['Response']
+    feature_vars = ['direct.vwap'] + meanPriceVol_vars + accumlatedDiff_vars + spreadMidPrice_vars + ['Response']
     data = data[feature_vars]
     data.to_csv(out_path, index = False)
