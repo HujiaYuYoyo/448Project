@@ -97,3 +97,8 @@ def long_short_open_function(epsilon,rho,kappa,theta,sigma, c):
 def long_short_open(rho,kappa,theta,sigma, c):
     return optimize.root(long_short_open_function,[-0.18,1.5 ], args=(rho, kappa, theta, sigma, c,), method = 'hybr').x
 
+def long_open(rho,kappa,theta,sigma, c):
+    return short_close(rho,kappa,theta,sigma, c)
+
+def short_open(rho,kappa,theta,sigma, c):
+    return long_close(rho,kappa,theta,sigma, c)
