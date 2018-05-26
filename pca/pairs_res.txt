@@ -1,0 +1,65 @@
+20150102 1 seconds QCOM_log_ret  TXN_log_ret    0.194869
+dtype: float64
+20150102 5 seconds MSFT_log_ret  QCOM_log_ret    0.316346
+dtype: float64
+20150102 10 seconds MU_log_ret  INTC_log_ret    0.405973
+dtype: float64
+20150102 20 seconds TXN_log_ret  INTC_log_ret    0.556603
+dtype: float64
+20150102 30 seconds TXN_log_ret  INTC_log_ret    0.607666
+dtype: float64
+20150102 60 seconds TXN_log_ret  INTC_log_ret    0.725387
+dtype: float64
+20150102 120 seconds [0, 0]
+20170103 1 seconds MSFT_log_ret  FB_log_ret    0.201638
+dtype: float64
+20170103 5 seconds INTC_log_ret  TXN_log_ret    0.407033
+dtype: float64
+20170103 10 seconds INTC_log_ret  TXN_log_ret    0.509607
+dtype: float64
+20170103 20 seconds TXN_log_ret  INTC_log_ret    0.590157
+dtype: float64
+20170103 30 seconds INTC_log_ret  TXN_log_ret    0.577877
+dtype: float64
+20170103 60 seconds TXN_log_ret  INTC_log_ret    0.602899
+dtype: float64
+20170103 120 seconds [0, 0]
+20170104 1 seconds TXN_log_ret  INTC_log_ret    0.197697
+dtype: float64
+20170104 5 seconds INTC_log_ret  QCOM_log_ret    0.366415
+dtype: float64
+20170104 10 seconds QCOM_log_ret  INTC_log_ret    0.436315
+dtype: float64
+20170104 20 seconds INTC_log_ret  QCOM_log_ret    0.503243
+dtype: float64
+20170104 30 seconds QCOM_log_ret  INTC_log_ret    0.499839
+dtype: float64
+20170104 60 seconds AAPL_log_ret  MSFT_log_ret    0.58059
+dtype: float64
+20170104 120 seconds [0, 0]
+
+
+
+ best pair is [0.7253865967812209, TXN_log_ret  INTC_log_ret    0.725387
+dtype: float64]
+
+
+ final results are: {'20170104': {1: TXN_log_ret  INTC_log_ret    0.197697
+dtype: float64, 5: INTC_log_ret  QCOM_log_ret    0.366415
+dtype: float64, 10: QCOM_log_ret  INTC_log_ret    0.436315
+dtype: float64, 20: INTC_log_ret  QCOM_log_ret    0.503243
+dtype: float64, 120: [0, 0], 60: AAPL_log_ret  MSFT_log_ret    0.58059
+dtype: float64, 30: QCOM_log_ret  INTC_log_ret    0.499839
+dtype: float64}, '20170103': {1: MSFT_log_ret  FB_log_ret    0.201638
+dtype: float64, 5: INTC_log_ret  TXN_log_ret    0.407033
+dtype: float64, 10: INTC_log_ret  TXN_log_ret    0.509607
+dtype: float64, 20: TXN_log_ret  INTC_log_ret    0.590157
+dtype: float64, 120: [0, 0], 60: TXN_log_ret  INTC_log_ret    0.602899
+dtype: float64, 30: INTC_log_ret  TXN_log_ret    0.577877
+dtype: float64}, '20150102': {1: QCOM_log_ret  TXN_log_ret    0.194869
+dtype: float64, 5: MSFT_log_ret  QCOM_log_ret    0.316346
+dtype: float64, 10: MU_log_ret  INTC_log_ret    0.405973
+dtype: float64, 20: TXN_log_ret  INTC_log_ret    0.556603
+dtype: float64, 120: [0, 0], 60: TXN_log_ret  INTC_log_ret    0.725387
+dtype: float64, 30: TXN_log_ret  INTC_log_ret    0.607666
+dtype: float64}}
