@@ -1,3 +1,10 @@
+##The parameters are the same as in the other file, BUT threshold is removed, and instead we have to choose constans rho>0 (urgency parameter) and c
+## and c>0 (a measure of the transaction costs). I have incorportared these two parameters to the class constructor and removed thresholds
+## rho should be close to 0 (I have tried 0.01 and 0.001) and c as well (I have tried 0.01)
+
+##The only differences with the other file are the block with all the new functions to compute the thresholds, and then in the execution part
+#that instead of comparing s with fixed thresholds, we compare the last residual with a threshold that deppends on the OU parameters
+
 %%time
 import sys
 from simulator import (
@@ -15,9 +22,120 @@ from scipy import integrate
 from scipy import optimize
 
 
+#### Functions to compute thresholds
+def fplus(u,rho,epsilon,kappa, theta, sigma):
+    #return u**(rho/kappa-1)*np.exp(-np.sqrt(2*kappa/sigma**2)*(theta-epsilon)*u-u**2/2)
+    return sigma**(rho/kappa)*u**(rho/kappa-1)*np.exp(-np.sqrt(2*kappa)*(theta-epsilon)*u-(u*sigma)**2/2)
+
+def fplus_der(u,rho,epsilon,kappa, theta, sigma):
+    #return np.sqrt(2*kappa/sigma**2)*u**(rho/kappa)*np.exp(-np.sqrt(2*kappa/sigma**2)*(theta-epsilon)*u-u**2/2)
+    return sigma**(rho/kappa)*np.sqrt(2*kappa)*u**(rho/kappa)*np.exp(-np.sqrt(2*kappa)*(theta-epsilon)*u-(u*sigma)**2/2)
+
+def fminus(u,rho,epsilon,kappa, theta, sigma):
+    #return u**(rho/kappa-1)*np.exp(np.sqrt(2*kappa/sigma**2)*(theta-epsilon)*u-u**2/2)
+    return sigma**(rho/kappa)*u**(rho/kappa-1)*np.exp(np.sqrt(2*kappa)*(theta-epsilon)*u-(u*sigma)**2/2)
+
+def fminus_der(u,rho,epsilon,kappa, theta, sigma):
+    #return -np.sqrt(2*kappa/sigma**2)*u**(rho/kappa)*np.exp(np.sqrt(2*kappa/sigma**2)*(theta-epsilon)*u-u**2/2)
+    return -sigma**(rho/kappa)*np.sqrt(2*kappa)*u**(rho/kappa)*np.exp(-np.sqrt(2*kappa)*(theta-epsilon)*u-(u*sigma)**2/2)
+
+def Fplus(epsilon,rho, kappa, theta, sigma):
+    integral,error = integrate.quad(fplus,0, 100, args = (rho,epsilon,kappa,theta,sigma,))
+    return integral
+
+def Fminus(epsilon,rho, kappa, theta, sigma):
+    integral,error = integrate.quad(fminus,0, np.inf, args = (rho,epsilon,kappa,theta,sigma,))
+    return integral
+
+def Fplus_der(epsilon,rho, kappa, theta, sigma):
+    integral,error = integrate.quad(fplus_der,0, np.inf, args = (rho,epsilon,kappa,theta,sigma,))
+    return integral
+
+def Fminus_der(epsilon,rho, kappa, theta, sigma):
+    integral,error = integrate.quad(fminus_der,0, np.inf, args = (rho,epsilon,kappa,theta,sigma,))
+    return integral
+
+def long_close_function(epsilon,rho, kappa, theta, sigma,c):
+    return (epsilon[0] - c)*Fplus_der(epsilon[0],rho, kappa, theta, sigma)-Fplus(epsilon[0],rho, kappa, theta, sigma)
+
+def long_close(rho, kappa, theta, sigma, c): #epsilon^*+
+    result = optimize.root(long_close_function,[1], args=(rho, kappa, theta, sigma, c,), method = 'lm')
+    if result.success:
+        return result.x[0]
+    else:
+        return (kappa*theta+c*rho)/(rho+kappa)
+
+def short_close_function(epsilon,rho, kappa, theta, sigma,c):
+    return (epsilon[0] + c)*Fminus_der(epsilon[0],rho, kappa, theta, sigma)-Fminus(epsilon[0],rho, kappa, theta, sigma)
+
+def short_close(rho, kappa, theta, sigma, c): #epsilon^*-
+    result = optimize.root(short_close_function,[-1], args=(rho, kappa, theta, sigma, c,), method = 'lm')
+    if result.success:
+        return result.x[0]
+    else:
+        return (kappa*theta-c*rho)/(rho+kappa)
+
+def Hplus(epsilon,kappa,theta, sigma,rho,c):
+    epsilonplus = long_close(rho, kappa, theta, sigma,c)
+    if epsilon >= epsilonplus:
+        return epsilon - c
+    else:
+        return (epsilonplus - c)*Fplus(epsilon,rho, kappa, theta, sigma)/Fplus(epsilonplus,rho, kappa, theta, sigma)
+    
+def Hplus_der(epsilon,kappa,theta, sigma,rho,c):
+    epsilonplus = long_close(rho, kappa, theta, sigma,c)
+    if epsilon >= epsilonplus:
+        return 1
+    else:
+        return (epsilonplus - c)*Fplus_der(epsilon,rho, kappa, theta, sigma)/Fplus(epsilonplus,rho, kappa, theta, sigma)
+
+def Hminus(epsilon,kappa,theta, sigma,rho, c):
+    epsilonminus = short_close(rho, kappa, theta, sigma,c)
+    if epsilon <= epsilonminus:
+        return -epsilon - c
+    else:
+        return -(epsilonminus + c)*Fminus(epsilon,rho, kappa, theta, sigma)/Fminus(epsilonminus,rho, kappa, theta, sigma)
+    
+    
+def Hminus_der(epsilon,kappa,theta, sigma,rho, c):
+    epsilonminus = short_close(rho, kappa, theta, sigma,c)
+    if epsilon <= epsilonminus:
+        return -1
+    else:
+        return -(epsilonminus + c)*Fminus_der(epsilon,rho, kappa, theta, sigma)/Fminus(epsilonminus,rho, kappa, theta, sigma)
+
+def long_short_open_function(epsilon,rho,kappa,theta,sigma, c):
+    minusepsilon = epsilon[0]
+    plusepsilon = epsilon[1]
+    
+    numA = Fminus(minusepsilon,rho, kappa, theta, sigma)*(Hplus(plusepsilon,kappa,theta,sigma,rho,c)-plusepsilon-c)-Fminus(plusepsilon,rho, kappa, theta, sigma)*(Hminus(minusepsilon,kappa,theta,sigma,rho,c)+minusepsilon-c)
+    denA = Fplus(plusepsilon,rho, kappa, theta, sigma)*Fminus(minusepsilon,rho, kappa, theta, sigma)-Fplus(minusepsilon,rho, kappa, theta, sigma)*Fminus(plusepsilon,rho, kappa, theta, sigma)
+    A = numA/denA
+
+    numB = Fplus(minusepsilon,rho, kappa, theta, sigma)*(Hplus(plusepsilon,kappa,theta,sigma,rho,c)-plusepsilon-c)-Fplus(plusepsilon,rho, kappa, theta, sigma)*(Hminus(minusepsilon,kappa,theta,sigma,rho,c)+minusepsilon-c)
+    denB = Fminus(plusepsilon,rho, kappa, theta, sigma)*Fplus(minusepsilon,rho, kappa, theta, sigma)-Fminus(minusepsilon,rho, kappa, theta, sigma)*Fplus(plusepsilon,rho, kappa, theta, sigma)
+    B = numB/denB
+    
+    y_0 = A*Fplus_der(plusepsilon,rho, kappa, theta, sigma)+B*Fminus_der(plusepsilon,rho, kappa, theta, sigma)+1-Hplus_der(plusepsilon,kappa,theta, sigma,rho, c)
+    y_1 = A*Fplus_der(minusepsilon,rho, kappa, theta, sigma)+B*Fminus_der(minusepsilon,rho, kappa, theta, sigma)-1-Hminus_der(minusepsilon,kappa,theta, sigma,rho, c)
+    
+    return [y_0,y_1]
+
+def long_short_open(rho,kappa,theta,sigma, c):
+    return optimize.root(long_short_open_function,[-0.18,1.5 ], args=(rho, kappa, theta, sigma, c,), method = 'hybr').x
+
+def long_open(rho,kappa,theta,sigma, c):
+    return short_close(rho,kappa,theta,sigma, c)
+
+def short_open(rho,kappa,theta,sigma, c):
+    return long_close(rho,kappa,theta,sigma, c)
+
+### Definition of the class
+
+
 class Ave_Lee(object):
     def __init__(self, session, date, tickers, start_time, end_time, pnl, buy_shares1, buy_dollars, 
-                 sell_shares1, sell_dollars, buy_shares2, sell_shares2, threshold, interval, training_size, trades):
+                 sell_shares1, sell_dollars, buy_shares2, sell_shares2, rho, c, interval, training_size, trades):
         self.session = session
         self.date = date
         self.tickers = tickers
@@ -52,10 +170,8 @@ class Ave_Lee(object):
         
         # variables used for the fitOU, when to open/close a position and how far we look back
         self.dt = 1
-        self.long_open = threshold[0]
-        self.long_close = threshold[1]
-        self.short_open = threshold[0]
-        self.short_close = threshold[2]
+        self.rho = rho #urgency parameter for when to open/close
+        self.c = c #measure of transaction costs
         self.training_size = training_size
         
         # start timer/ call the start_callback function
@@ -131,7 +247,7 @@ class Ave_Lee(object):
             
             if not orders and b > 0 and kappa > 0 and sigma > 0 and time < self.end_time - self.halt_trading:
                 if pos == 0:
-                    if s < -self.long_open:
+                    if residual < long_open(self.rho,kappa,m,sigma, self.c):
                         self.side1 = BUY
                         self.side2 = SELL
                         price1 = ask1['price']# - self.tick_size
@@ -142,7 +258,7 @@ class Ave_Lee(object):
                         self.session.add_order(self.ticker1, self.side1, self.order_size1, price1, exchange=EXCH_INET)
                         self.session.add_order(self.ticker2, self.side2, self.order_size2, price2, exchange=EXCH_INET)
                         self.trades += 1                   
-                    elif s > self.short_open:
+                    elif residual > short_open(self.rho,kappa,m,sigma, self.c):
                         self.side1 = SELL
                         self.side2 = BUY
                         price1 = bid1['price']# + self.tick_size
@@ -153,14 +269,14 @@ class Ave_Lee(object):
                         self.session.add_order(self.ticker1, self.side1, self.order_size1, price1, exchange=EXCH_INET)
                         self.session.add_order(self.ticker2, self.side2, self.order_size2, price2, exchange=EXCH_INET)
                         self.trades += 1                    
-                elif pos < 0 and s < self.short_close:
+                elif pos < 0 and residual < short_close(self.rho,kappa,m,sigma, self.c):
                     self.side1 = BUY
                     self.side2 = SELL
                     price1 = ask1['price']# - self.tick_size
                     price2 = bid2['price']# + self.tick_size
                     self.session.add_order(self.ticker1, self.side1, self.order_size1, price1, exchange=EXCH_INET)
                     self.session.add_order(self.ticker2, self.side2, self.order_size2, price2, exchange=EXCH_INET)  
-                elif pos > 0 and s > -self.long_close:
+                elif pos > 0 and residual > long_close(self.rho,kappa,m,sigma, self.c):
                     self.side1 = SELL
                     self.side2 = BUY
                     price1 = bid1['price']# + self.tick_size
