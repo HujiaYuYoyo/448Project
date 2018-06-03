@@ -40,7 +40,7 @@ def fminus_der(u,rho,epsilon,kappa, theta, sigma):
     return -sigma**(rho/kappa)*np.sqrt(2*kappa)*u**(rho/kappa)*np.exp(-np.sqrt(2*kappa)*(theta-epsilon)*u-(u*sigma)**2/2)
 
 def Fplus(epsilon,rho, kappa, theta, sigma):
-    integral,error = integrate.quad(fplus,0, 100, args = (rho,epsilon,kappa,theta,sigma,))
+    integral,error = integrate.quad(fplus,0, np.inf, args = (rho,epsilon,kappa,theta,sigma,))
     return integral
 
 def Fminus(epsilon,rho, kappa, theta, sigma):
